@@ -1,4 +1,4 @@
-package com.aline.microservicetemplate;
+package com.aline.cardmicroservice;
 
 import com.aline.core.annotation.EnableCoreModule;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -9,16 +9,16 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @EnableCoreModule
 @OpenAPIDefinition(info =
-    @Info(
-            title = "Microservice Template",
-            description = "(Update this description) This is a description of your microservice and it's functionality.",
-            version = "1.0"
-    )
+@Info(
+        title = "Microservice Template",
+        description = "(Update this description) This is a description of your microservice and it's functionality.",
+        version = "1.0"
 )
-public class MicroserviceTemplateApplication {
+)
+public class CardMicroserviceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(MicroserviceTemplateApplication.class, args);
+        SpringApplication.run(CardMicroserviceApplication.class, args);
     }
 
 }

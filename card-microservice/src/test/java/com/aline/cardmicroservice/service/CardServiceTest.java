@@ -37,6 +37,7 @@ class CardServiceTest {
 
     @Test
     void test_validateCardNumber() {
+        assertTrue(cardService.validateCardNumber("4539343576281337"));
         assertTrue(cardService.validateCardNumber("12345674"));
         assertFalse(cardService.validateCardNumber("12345675"));
         assertTrue(cardService.validateCardNumber("5432178944"));

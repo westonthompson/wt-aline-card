@@ -25,10 +25,8 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -102,28 +100,32 @@ public class CardService {
         StringBuilder cardNumberBuilder = new StringBuilder();
         cardNumberBuilder.append(iin);
         cardNumberBuilder.append(randomNumbers);
-        int checkDigit = getCheckDigit(cardNumberBuilder.toString());
+        int checkDigit = 10 - (getCheckSum(cardNumberBuilder.toString()) % 10);
         return cardNumberBuilder.append(checkDigit).toString();
     }
 
-    private int getCheckDigit(String partialCardNumber) {
-        List<Integer> digits = partialCardNumber.chars()
-                .mapToObj(Character::getNumericValue)
-                .collect(Collectors.toList());
-        Collections.reverse(digits);
+    private int getCheckSum(String partCardNo) {
+        int len = partCardNo.length();
+
         int checkSum = 0;
-        for (int i = 0; i < digits.size(); i+=2) {
-            int digit = digits.get(i) * 2;
-            if (digit > 9) digit -= 9;
+        boolean isOdd = true;
+        for (int i = len - 1; i >= 0; i--) {
+            int digit = partCardNo.charAt(i) - '0';
+            if (isOdd) {
+                digit *= 2;
+                if (digit > 9)
+                    digit -= 9;
+            }
             checkSum += digit;
+            isOdd = !isOdd;
         }
-        return checkSum % 10;
+        return checkSum;
     }
 
     public boolean validateCardNumber(String cardNumber) {
-        int checkDigit = Character.getNumericValue(cardNumber.charAt(cardNumber.length() - 1));
-        int checkSum = getCheckDigit(cardNumber.substring(0, cardNumber.length() - 1));
-        return checkSum % 10 == checkDigit;
+        int checkDigit = cardNumber.charAt(cardNumber.length() - 1) - '0';
+        int checkSum = getCheckSum(cardNumber.substring(0, cardNumber.length() - 1));
+        return (checkSum + checkDigit) % 10 == 0;
     }
 
     public CardResponse mapToResponse(Card card) {

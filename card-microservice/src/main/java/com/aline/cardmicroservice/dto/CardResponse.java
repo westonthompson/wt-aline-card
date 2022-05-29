@@ -1,5 +1,6 @@
 package com.aline.cardmicroservice.dto;
 
+import com.aline.core.model.card.CardStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,5 +14,6 @@ public class CardResponse {
     private String securityCode;
     private LocalDate expirationDate;
     private String cardHolder;
+    private String cardStatus;
 
 }

@@ -10,11 +10,9 @@ import javax.validation.constraints.NotBlank;
 @Data
 @Builder
 public class CreateDebitCardRequest {
-
     @NotBlank
     @AccountNumber
     private String accountNumber;
-
     @NotBlank
     @MembershipId
     private String membershipId;

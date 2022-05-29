@@ -3,6 +3,7 @@ package com.aline.cardmicroservice.service;
 import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
 import com.aline.cardmicroservice.repository.CardRepository;
+import com.aline.core.dto.request.CardRequest;
 import com.aline.core.exception.BadRequestException;
 import com.aline.core.exception.ResponseEntityException;
 import com.aline.core.exception.notfound.AccountNotFoundException;
@@ -10,6 +11,8 @@ import com.aline.core.exception.notfound.CardNotFoundException;
 import com.aline.core.model.Applicant;
 import com.aline.core.model.Member;
 import com.aline.core.model.account.Account;
+import com.aline.core.model.account.AccountStatus;
+import com.aline.core.model.account.AccountType;
 import com.aline.core.model.card.Card;
 import com.aline.core.model.card.CardIssuer;
 import com.aline.core.model.card.CardStatus;
@@ -42,6 +45,14 @@ public class CardService {
         return repository.findById(id).orElseThrow(CardNotFoundException::new);
     }
 
+    public Card getCardByCardRequest(CardRequest cardRequest) {
+        return repository.findByCardNumberAndSecurityCodeAndExpirationDate(
+                cardRequest.getCardNumber(),
+                cardRequest.getSecurityCode(),
+                cardRequest.getExpirationDate()
+        ).orElseThrow(CardNotFoundException::new);
+    }
+
     public List<Card> getCardsByMemberId(Long memberId) {
         return repository.getCardsByCardHolderId(memberId);
     }
@@ -54,6 +65,16 @@ public class CardService {
 
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(AccountNotFoundException::new);
+
+        if (account.getAccountType() != AccountType.CHECKING)
+            throw new BadRequestException("Debit cards can only be opened on a valid CHECKING account. This account is not a CHECKING account.");
+
+        if (account.getStatus() == AccountStatus.INACTIVE)
+            throw new BadRequestException("Cannot create a debit card on an inactive account.");
+
+        if (account.getStatus() == AccountStatus.ARCHIVED)
+            throw new BadRequestException("Cannot create a debit card on a closed account.");
+
         Member member = account.getMembers().stream()
                 .filter(m -> m.getMembershipId().equals(membershipId))
                 .findFirst()
@@ -92,6 +113,20 @@ public class CardService {
         member.getCards().add(savedCard);
 
         return savedCard;
+    }
+
+    public Card activateCard(@Valid CardRequest cardRequest) {
+        Card card = getCardByCardRequest(cardRequest);
+
+        if (card.getCardStatus() == CardStatus.ACTIVE)
+            throw new BadRequestException("Card is already active.");
+        if (card.getCardStatus() == CardStatus.CLOSED)
+            throw new BadRequestException("Card has been closed. Cannot activate a closed card.");
+        if (card.getAccount().getStatus() == AccountStatus.ARCHIVED)
+            throw new BadRequestException("Cannot activate a card on a closed account.");
+
+        card.setCardStatus(CardStatus.ACTIVE);
+        return repository.save(card);
     }
 
     public String generateCardNumber(String iin, int length) {
@@ -143,6 +178,7 @@ public class CardService {
                 .securityCode(card.getSecurityCode())
                 .expirationDate(card.getExpirationDate())
                 .cardHolder(cardHolderName)
+                .cardStatus(card.getCardStatus().name())
                 .build();
     }
 

@@ -4,6 +4,7 @@ import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
 import com.aline.cardmicroservice.dto.CreateDebitCardResponse;
 import com.aline.cardmicroservice.service.CardService;
+import com.aline.core.dto.request.CardRequest;
 import com.aline.core.model.card.Card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +40,11 @@ public class CardController {
                 .cardHolderId(card.getCardHolder().getMembershipId())
                 .accountNumber(card.getAccount().getAccountNumber())
                 .build();
+    }
+
+    @PostMapping("/activation")
+    public CardResponse activateCard(@Valid @RequestBody CardRequest cardRequest) {
+        return cardService.mapToResponse(cardService.activateCard(cardRequest));
     }
 
 }

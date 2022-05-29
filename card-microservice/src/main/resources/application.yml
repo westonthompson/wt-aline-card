@@ -35,4 +35,5 @@ app:
     credentials:
       access-key-id: "${APP_USER_ACCESS_KEY}"
       secret-access-key: "${APP_USER_SECRET_KEY}"
+  default-card-issuer: "VISA"
 

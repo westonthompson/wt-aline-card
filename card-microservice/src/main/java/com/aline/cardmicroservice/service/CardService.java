@@ -106,7 +106,6 @@ public class CardService {
 
     private int getCheckSum(String partCardNo) {
         int len = partCardNo.length();
-
         int checkSum = 0;
         boolean isOdd = true;
         for (int i = len - 1; i >= 0; i--) {

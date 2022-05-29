@@ -27,7 +27,7 @@ public class CardController {
         return cardService.mapToResponse(cardService.getCardById(id));
     }
 
-    @PostMapping
+    @PostMapping("/debit")
     public CreateDebitCardResponse createDebitCard(@RequestBody @Valid CreateDebitCardRequest request) {
         Card card = cardService.createDebitCard(request);
         CardResponse cardResponse = cardService.mapToResponse(card);

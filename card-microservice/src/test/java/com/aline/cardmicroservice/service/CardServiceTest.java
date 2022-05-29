@@ -49,7 +49,7 @@ class CardServiceTest {
         String cardNumber = cardService.generateCardNumber("1234", 16);
         assertEquals("1234", cardNumber.substring(0, 4));
         assertEquals(16, cardNumber.length());
-        assertEquals(5, Character.getNumericValue(cardNumber.charAt(15)));
+        assertEquals(8, Character.getNumericValue(cardNumber.charAt(15)));
         assertTrue(cardService.validateCardNumber(cardNumber));
     }
 

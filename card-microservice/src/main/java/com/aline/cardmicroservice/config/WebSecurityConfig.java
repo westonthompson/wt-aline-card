@@ -10,7 +10,7 @@ public class WebSecurityConfig extends AbstractWebSecurityConfig {
     @Override
     protected void configureHttp(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/cards/debit", "/cards/activation")
+                .antMatchers(HttpMethod.POST, "/cards/activation")
                 .permitAll();
     }
 }

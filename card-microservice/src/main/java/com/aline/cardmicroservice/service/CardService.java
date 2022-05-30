@@ -23,6 +23,8 @@ import com.aline.core.util.RandomNumberGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -41,10 +43,12 @@ public class CardService {
     private final CardIssuerService cardIssuerService;
     private final RandomNumberGenerator randomNumberGenerator;
 
+    @PostAuthorize("@authService.canAccess(#returnObject)")
     public Card getCardById(long id) {
         return repository.findById(id).orElseThrow(CardNotFoundException::new);
     }
 
+    @PostAuthorize("@authService.canAccess(#returnObject)")
     public Card getCardByCardRequest(CardRequest cardRequest) {
         return repository.findByCardNumberAndSecurityCodeAndExpirationDate(
                 cardRequest.getCardNumber(),
@@ -53,10 +57,12 @@ public class CardService {
         ).orElseThrow(CardNotFoundException::new);
     }
 
+    @PreAuthorize("@authService.canAccessByMemberId(#memberId)")
     public List<Card> getCardsByMemberId(Long memberId) {
         return repository.getCardsByCardHolderId(memberId);
     }
 
+    @PreAuthorize("@authService.canAccessByCreateDebitCardRequest(#createDebitCardRequest)")
     @Transactional(rollbackOn = ResponseEntityException.class)
     public Card createDebitCard(@Valid CreateDebitCardRequest createDebitCardRequest) {
 

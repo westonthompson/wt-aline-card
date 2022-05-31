@@ -1,5 +1,6 @@
 package com.aline.cardmicroservice.service;
 
+import com.aline.cardmicroservice.dto.ActivateCardRequest;
 import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
 import com.aline.cardmicroservice.repository.CardRepository;
@@ -121,15 +122,33 @@ public class CardService {
         return savedCard;
     }
 
-    public Card activateCard(@Valid CardRequest cardRequest) {
-        Card card = getCardByCardRequest(cardRequest);
+    public Card activateCard(@Valid ActivateCardRequest activateCardRequest) {
 
+        Card card = getCardByCardRequest(CardRequest.builder()
+                .cardNumber(activateCardRequest.getCardNumber())
+                .securityCode(activateCardRequest.getSecurityCode())
+                .expirationDate(activateCardRequest.getExpirationDate())
+                .build());
+
+        Member member = card.getCardHolder();
+        String ssn = member.getApplicant().getSocialSecurity();
+
+        LocalDate dateOfBirth = member.getApplicant().getDateOfBirth();
+        String lastFourSSN = ssn.substring(ssn.length() - 4);
+
+        // Verify cardholder information
+        if (!dateOfBirth.isEqual(activateCardRequest.getDateOfBirth()) ||
+            !lastFourSSN.equals(activateCardRequest.getLastFourOfSSN()))
+            throw new BadRequestException("Information was not entered correctly. Please check your card and try again.");
+
+        // Checks to allow card activation
         if (card.getCardStatus() == CardStatus.ACTIVE)
             throw new BadRequestException("Card is already active.");
         if (card.getCardStatus() == CardStatus.CLOSED)
             throw new BadRequestException("Card has been closed. Cannot activate a closed card.");
         if (card.getAccount().getStatus() == AccountStatus.ARCHIVED)
             throw new BadRequestException("Cannot activate a card on a closed account.");
+
 
         card.setCardStatus(CardStatus.ACTIVE);
         return repository.save(card);

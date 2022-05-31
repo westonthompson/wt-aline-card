@@ -3,10 +3,12 @@ package com.aline.cardmicroservice.controller;
 import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
 import com.aline.cardmicroservice.dto.CreateDebitCardResponse;
+import com.aline.cardmicroservice.service.CardEmailService;
 import com.aline.cardmicroservice.service.CardService;
 import com.aline.core.dto.request.CardRequest;
 import com.aline.core.model.card.Card;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,9 +21,11 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/cards")
 @RequiredArgsConstructor
+@Slf4j
 public class CardController {
 
     private final CardService cardService;
+    private final CardEmailService cardEmailService;
 
     @GetMapping("/{id}")
     public CardResponse getCardById(@PathVariable Long id) {
@@ -31,6 +35,10 @@ public class CardController {
     @PostMapping("/debit")
     public CreateDebitCardResponse createDebitCard(@RequestBody @Valid CreateDebitCardRequest request) {
         Card card = cardService.createDebitCard(request);
+        log.info("Successfully created debit card.");
+        log.info("Sending card to member...");
+        cardEmailService.sendCard(card);
+        log.info("Successfully sent card to member.");
         CardResponse cardResponse = cardService.mapToResponse(card);
         return CreateDebitCardResponse.builder()
                 .cardNumber(card.getCardNumber())

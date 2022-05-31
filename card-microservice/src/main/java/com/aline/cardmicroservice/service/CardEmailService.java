@@ -1,6 +1,8 @@
 package com.aline.cardmicroservice.service;
 
+import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.core.aws.email.EmailService;
+import com.aline.core.config.AppConfig;
 import com.aline.core.model.Applicant;
 import com.aline.core.model.Member;
 import com.aline.core.model.card.Card;
@@ -9,35 +11,42 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CardEmailService {
 
     private final EmailService emailService;
+    private final CardService cardService;
+    private final AppConfig appConfig;
 
     public void sendCard(Card card) {
         Member member = card.getCardHolder();
         Applicant applicant = member.getApplicant();
-
-        String cardNumber = card.getCardNumber();
-        String securityCode = card.getCardNumber();
-        LocalDate expirationDate = card.getExpirationDate();
-
-        StringBuilder message = new StringBuilder();
-        message.append("This email is sent for development purposes only. It is meant to simulate sending a real credit/debit card in the mail.");
-        message.append("\n\n");
-        message.append(String.format("Card Number: %s", cardNumber));
-        message.append(String.format("Security Code: %s", securityCode));
-
+        CardResponse cardResponse = cardService.mapToResponse(card);
+        String cardNumber = cardResponse.getCardNumber();
+        String securityCode = cardResponse.getSecurityCode();
+        LocalDate expirationDate = cardResponse.getExpirationDate();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
-        message.append(String.format("Exp. Date: %s", expirationDate.format(formatter)));
+        String cardHolderName = cardResponse.getCardHolder().toUpperCase();
+        String memberDashboard = appConfig.getMemberDashboard() + "/activate";
 
-        message.append("\n\n");
-        message.append("NOTICE: This is not a real credit/debit card. These card numbers are randomly generated for development purposes only and can only be used within the scope of this application.");
+        String formattedCardNumber = cardNumber.replaceAll("\\d{4}(?!$)", "$0 ");
 
-        emailService.sendEmail("Card successfully issued", message.toString(), applicant.getEmail());
 
+        Map<String, String> variables = Arrays.stream(new String[][] {
+                {"name", applicant.getFirstName()},
+                {"cardNumber", formattedCardNumber},
+                {"securityCode", securityCode},
+                {"expirationDate", expirationDate.format(formatter)},
+                {"cardHolderName", cardHolderName},
+                {"activateCardUrl", memberDashboard}
+        }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
+
+        emailService.sendHtmlEmail("Card successfully issued", "card/send-card", applicant.getEmail(), variables);
     }
 
 }

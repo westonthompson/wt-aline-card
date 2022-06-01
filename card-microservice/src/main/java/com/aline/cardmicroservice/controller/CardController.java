@@ -38,7 +38,7 @@ public class CardController {
         Card card = cardService.createDebitCard(request);
         log.info("Successfully created debit card.");
         log.info("Sending card to member...");
-        cardEmailService.sendCard(card);
+        cardEmailService.sendCard(card, request.isReplacement());
         log.info("Successfully sent card to member.");
         CardResponse cardResponse = cardService.mapToResponse(card);
         return CreateDebitCardResponse.builder()

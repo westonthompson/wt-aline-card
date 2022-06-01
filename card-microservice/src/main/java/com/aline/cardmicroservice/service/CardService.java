@@ -33,6 +33,7 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,10 +64,17 @@ public class CardService {
         return repository.getCardsByCardHolderId(memberId);
     }
 
+    @PreAuthorize("@authService.canAccessByMemberId(#memberId)")
+    public List<Card> getAvailableCardsByMemberId(Long memberId) {
+        return getCardsByMemberId(memberId).stream()
+                .filter(card -> card.getCardStatus() != CardStatus.CLOSED)
+                .collect(Collectors.toList());
+    }
+
     @PreAuthorize("@authService.canAccessByCreateDebitCardRequest(#createDebitCardRequest)")
     @Transactional(rollbackOn = ResponseEntityException.class)
     public Card createDebitCard(@Valid CreateDebitCardRequest createDebitCardRequest) {
-
+        // One debit card per member per account
         String accountNumber = createDebitCardRequest.getAccountNumber();
         String membershipId = createDebitCardRequest.getMembershipId();
 
@@ -89,8 +97,25 @@ public class CardService {
                     throw new BadRequestException("Member does not exist in this account.");
                 });
 
+        boolean cardExists = repository.existsCardByCardHolderAndAccount(member, account);
+
+        if (cardExists) {
+            List<Card> allCards = repository.findCardsByCardHolderAndAccount(member, account);
+            if (createDebitCardRequest.isReplacement()) {
+                log.info("Requesting replacement. Closing all cards.");
+                allCards.forEach(card -> card.setCardStatus(CardStatus.CLOSED));
+                repository.saveAll(allCards);
+                log.info("Proceeding with card creation...");
+            } else {
+                log.error("Activate card already exists. Please request a replacement");
+                throw new BadRequestException("Active card already exists. Please request a replacement instead.");
+            }
+        }
+
         CardIssuer defaultCardIssuer = cardIssuerService.getDefaultCardIssuer();
         IssuerIdentificationNumber defaultIin = cardIssuerService.getDefaultIin();
+
+        log.info("Using default issuer: {}", defaultCardIssuer.getIssuerName());
 
         String cardNumber = generateCardNumber(defaultIin.getIin(), defaultCardIssuer.getCardNumberLength());
 
@@ -118,6 +143,8 @@ public class CardService {
 
         account.getCards().add(savedCard);
         member.getCards().add(savedCard);
+
+        log.info("Successfully saved card.");
 
         return savedCard;
     }

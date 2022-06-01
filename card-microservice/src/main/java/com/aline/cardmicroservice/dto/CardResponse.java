@@ -1,6 +1,5 @@
 package com.aline.cardmicroservice.dto;
 
-import com.aline.core.model.card.CardStatus;
 import lombok.Builder;
 import lombok.Data;
 

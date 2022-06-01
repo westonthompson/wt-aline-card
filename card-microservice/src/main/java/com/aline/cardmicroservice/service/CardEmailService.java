@@ -23,7 +23,7 @@ public class CardEmailService {
     private final CardService cardService;
     private final AppConfig appConfig;
 
-    public void sendCard(Card card) {
+    public void sendCard(Card card, boolean replacement) {
         Member member = card.getCardHolder();
         Applicant applicant = member.getApplicant();
         CardResponse cardResponse = cardService.mapToResponse(card);
@@ -36,7 +36,6 @@ public class CardEmailService {
 
         String formattedCardNumber = cardNumber.replaceAll("\\d{4}(?!$)", "$0 ");
 
-
         Map<String, String> variables = Arrays.stream(new String[][] {
                 {"name", applicant.getFirstName()},
                 {"landingPortalUrl", appConfig.getLandingPortal()},
@@ -47,7 +46,9 @@ public class CardEmailService {
                 {"activateCardUrl", memberDashboard}
         }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
-        emailService.sendHtmlEmail("Card successfully issued", "card/send-card", applicant.getEmail(), variables);
+        String templateName = replacement ? "card/replace-card" : "card/send-card";
+
+        emailService.sendHtmlEmail("Card successfully issued", templateName, applicant.getEmail(), variables);
     }
 
 }

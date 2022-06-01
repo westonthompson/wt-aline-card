@@ -39,6 +39,7 @@ public class CardEmailService {
 
         Map<String, String> variables = Arrays.stream(new String[][] {
                 {"name", applicant.getFirstName()},
+                {"landingPortalUrl", appConfig.getLandingPortal()},
                 {"cardNumber", formattedCardNumber},
                 {"securityCode", securityCode},
                 {"expirationDate", expirationDate.format(formatter)},

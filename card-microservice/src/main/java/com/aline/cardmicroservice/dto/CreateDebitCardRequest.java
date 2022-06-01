@@ -16,4 +16,5 @@ public class CreateDebitCardRequest {
     @NotBlank
     @MembershipId
     private String membershipId;
+    private boolean replacement;
 }

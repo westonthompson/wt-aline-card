@@ -1,5 +1,6 @@
 package com.aline.cardmicroservice.service;
 
+import com.aline.cardmicroservice.dto.ActivateCardRequest;
 import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
 import com.aline.cardmicroservice.repository.CardRepository;
@@ -32,6 +33,7 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,10 +64,17 @@ public class CardService {
         return repository.getCardsByCardHolderId(memberId);
     }
 
+    @PreAuthorize("@authService.canAccessByMemberId(#memberId)")
+    public List<Card> getAvailableCardsByMemberId(Long memberId) {
+        return getCardsByMemberId(memberId).stream()
+                .filter(card -> card.getCardStatus() != CardStatus.CLOSED)
+                .collect(Collectors.toList());
+    }
+
     @PreAuthorize("@authService.canAccessByCreateDebitCardRequest(#createDebitCardRequest)")
     @Transactional(rollbackOn = ResponseEntityException.class)
     public Card createDebitCard(@Valid CreateDebitCardRequest createDebitCardRequest) {
-
+        // One debit card per member per account
         String accountNumber = createDebitCardRequest.getAccountNumber();
         String membershipId = createDebitCardRequest.getMembershipId();
 
@@ -88,8 +97,25 @@ public class CardService {
                     throw new BadRequestException("Member does not exist in this account.");
                 });
 
+        boolean cardExists = repository.existsCardByCardHolderAndAccount(member, account);
+
+        if (cardExists) {
+            List<Card> allCards = repository.findCardsByCardHolderAndAccount(member, account);
+            if (createDebitCardRequest.isReplacement()) {
+                log.info("Requesting replacement. Closing all cards.");
+                allCards.forEach(card -> card.setCardStatus(CardStatus.CLOSED));
+                repository.saveAll(allCards);
+                log.info("Proceeding with card creation...");
+            } else {
+                log.error("Activate card already exists. Please request a replacement");
+                throw new BadRequestException("Active card already exists. Please request a replacement instead.");
+            }
+        }
+
         CardIssuer defaultCardIssuer = cardIssuerService.getDefaultCardIssuer();
         IssuerIdentificationNumber defaultIin = cardIssuerService.getDefaultIin();
+
+        log.info("Using default issuer: {}", defaultCardIssuer.getIssuerName());
 
         String cardNumber = generateCardNumber(defaultIin.getIin(), defaultCardIssuer.getCardNumberLength());
 
@@ -118,18 +144,38 @@ public class CardService {
         account.getCards().add(savedCard);
         member.getCards().add(savedCard);
 
+        log.info("Successfully saved card.");
+
         return savedCard;
     }
 
-    public Card activateCard(@Valid CardRequest cardRequest) {
-        Card card = getCardByCardRequest(cardRequest);
+    public Card activateCard(@Valid ActivateCardRequest activateCardRequest) {
 
+        Card card = getCardByCardRequest(CardRequest.builder()
+                .cardNumber(activateCardRequest.getCardNumber())
+                .securityCode(activateCardRequest.getSecurityCode())
+                .expirationDate(activateCardRequest.getExpirationDate())
+                .build());
+
+        Member member = card.getCardHolder();
+        String ssn = member.getApplicant().getSocialSecurity();
+
+        LocalDate dateOfBirth = member.getApplicant().getDateOfBirth();
+        String lastFourSSN = ssn.substring(ssn.length() - 4);
+
+        // Verify cardholder information
+        if (!dateOfBirth.isEqual(activateCardRequest.getDateOfBirth()) ||
+            !lastFourSSN.equals(activateCardRequest.getLastFourOfSSN()))
+            throw new BadRequestException("Information was not entered correctly. Please check your card and try again.");
+
+        // Checks to allow card activation
         if (card.getCardStatus() == CardStatus.ACTIVE)
             throw new BadRequestException("Card is already active.");
         if (card.getCardStatus() == CardStatus.CLOSED)
             throw new BadRequestException("Card has been closed. Cannot activate a closed card.");
         if (card.getAccount().getStatus() == AccountStatus.ARCHIVED)
             throw new BadRequestException("Cannot activate a card on a closed account.");
+
 
         card.setCardStatus(CardStatus.ACTIVE);
         return repository.save(card);

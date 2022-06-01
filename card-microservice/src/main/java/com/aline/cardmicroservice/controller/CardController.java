@@ -1,5 +1,6 @@
 package com.aline.cardmicroservice.controller;
 
+import com.aline.cardmicroservice.dto.ActivateCardRequest;
 import com.aline.cardmicroservice.dto.CardResponse;
 import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
 import com.aline.cardmicroservice.dto.CreateDebitCardResponse;
@@ -37,7 +38,7 @@ public class CardController {
         Card card = cardService.createDebitCard(request);
         log.info("Successfully created debit card.");
         log.info("Sending card to member...");
-        cardEmailService.sendCard(card);
+        cardEmailService.sendCard(card, request.isReplacement());
         log.info("Successfully sent card to member.");
         CardResponse cardResponse = cardService.mapToResponse(card);
         return CreateDebitCardResponse.builder()
@@ -51,7 +52,7 @@ public class CardController {
     }
 
     @PostMapping("/activation")
-    public CardResponse activateCard(@Valid @RequestBody CardRequest cardRequest) {
+    public CardResponse activateCard(@Valid @RequestBody ActivateCardRequest cardRequest) {
         return cardService.mapToResponse(cardService.activateCard(cardRequest));
     }
 

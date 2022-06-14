@@ -1,6 +1,6 @@
 package com.aline.cardmicroservice.authorization;
 
-import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
+import com.aline.core.dto.request.CreateDebitCardRequest;
 import com.aline.core.model.Member;
 import com.aline.core.model.account.Account;
 import com.aline.core.model.card.Card;

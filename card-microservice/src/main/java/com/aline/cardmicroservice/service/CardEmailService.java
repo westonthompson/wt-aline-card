@@ -1,11 +1,12 @@
 package com.aline.cardmicroservice.service;
 
-import com.aline.cardmicroservice.dto.CardResponse;
+import com.aline.core.dto.response.CardResponse;
 import com.aline.core.aws.email.EmailService;
 import com.aline.core.config.AppConfig;
 import com.aline.core.model.Applicant;
 import com.aline.core.model.Member;
 import com.aline.core.model.card.Card;
+import com.aline.core.util.CardUtility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +21,13 @@ import java.util.stream.Collectors;
 public class CardEmailService {
 
     private final EmailService emailService;
-    private final CardService cardService;
     private final AppConfig appConfig;
+    private final CardUtility cardUtility;
 
     public void sendCard(Card card, boolean replacement) {
         Member member = card.getCardHolder();
         Applicant applicant = member.getApplicant();
-        CardResponse cardResponse = cardService.mapToResponse(card);
+        CardResponse cardResponse = cardUtility.mapToResponse(card);
         String cardNumber = cardResponse.getCardNumber();
         String securityCode = cardResponse.getSecurityCode();
         LocalDate expirationDate = cardResponse.getExpirationDate();

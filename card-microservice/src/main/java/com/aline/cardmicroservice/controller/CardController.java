@@ -1,12 +1,11 @@
 package com.aline.cardmicroservice.controller;
 
-import com.aline.cardmicroservice.dto.ActivateCardRequest;
-import com.aline.cardmicroservice.dto.CardResponse;
-import com.aline.cardmicroservice.dto.CreateDebitCardRequest;
-import com.aline.cardmicroservice.dto.CreateDebitCardResponse;
+import com.aline.core.dto.request.ActivateCardRequest;
+import com.aline.core.dto.response.CardResponse;
+import com.aline.core.dto.request.CreateDebitCardRequest;
+import com.aline.core.dto.response.CreateDebitCardResponse;
 import com.aline.cardmicroservice.service.CardEmailService;
 import com.aline.cardmicroservice.service.CardService;
-import com.aline.core.dto.request.CardRequest;
 import com.aline.core.model.card.Card;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

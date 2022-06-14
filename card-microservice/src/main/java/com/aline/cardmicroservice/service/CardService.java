@@ -149,10 +149,6 @@ public class CardService {
         return savedCard;
     }
 
-    public String generateCardNumber(String iin, int cardNumberLength) {
-        return cardUtility.generateCardNumber(iin, cardNumberLength);
-    }
-
     public Card activateCard(@Valid ActivateCardRequest activateCardRequest) {
 
         Card card = getCardByCardRequest(CardRequest.builder()
@@ -183,6 +179,10 @@ public class CardService {
 
         card.setCardStatus(CardStatus.ACTIVE);
         return repository.save(card);
+    }
+
+    public String generateCardNumber(String iin, int cardNumberLength) {
+        return cardUtility.generateCardNumber(iin, cardNumberLength);
     }
 
     public CardResponse mapToResponse(Card card) {

@@ -2,6 +2,7 @@ package com.aline.cardmicroservice.service;
 
 import com.aline.cardmicroservice.repository.CardRepository;
 import com.aline.core.repository.AccountRepository;
+import com.aline.core.util.CardUtility;
 import com.aline.core.util.RandomNumberGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,12 +24,14 @@ class CardServiceTest {
     CardIssuerService cardIssuerService;
     @Mock
     RandomNumberGenerator randomNumberGenerator;
+    CardUtility cardUtility;
     CardService cardService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        cardService = new CardService(repository, accountRepository, cardIssuerService, randomNumberGenerator);
+        cardUtility = new CardUtility(randomNumberGenerator);
+        cardService = new CardService(repository, accountRepository, cardIssuerService, randomNumberGenerator, cardUtility);
         when(randomNumberGenerator.generateRandomNumberString(11)).thenReturn("12345678912");
     }
 

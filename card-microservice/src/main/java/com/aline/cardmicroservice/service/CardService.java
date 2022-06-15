@@ -4,6 +4,7 @@ import com.aline.cardmicroservice.repository.CardRepository;
 import com.aline.core.dto.request.ActivateCardRequest;
 import com.aline.core.dto.request.CardRequest;
 import com.aline.core.dto.request.CreateDebitCardRequest;
+import com.aline.core.dto.response.CardResponse;
 import com.aline.core.exception.BadRequestException;
 import com.aline.core.exception.ResponseEntityException;
 import com.aline.core.exception.notfound.AccountNotFoundException;
@@ -116,7 +117,7 @@ public class CardService {
 
         log.info("Using default issuer: {}", defaultCardIssuer.getIssuerName());
 
-        String cardNumber = cardUtility.generateCardNumber(defaultIin.getIin(), defaultCardIssuer.getCardNumberLength());
+        String cardNumber = generateCardNumber(defaultIin.getIin(), defaultCardIssuer.getCardNumberLength());
 
         Card card = new Card();
         card.setCardNumber(cardNumber);
@@ -180,4 +181,15 @@ public class CardService {
         return repository.save(card);
     }
 
+    public String generateCardNumber(String iin, int cardNumberLength) {
+        return cardUtility.generateCardNumber(iin, cardNumberLength);
+    }
+
+    public CardResponse mapToResponse(Card card) {
+        return cardUtility.mapToResponse(card);
+    }
+
+    public boolean validateCardNumber(String cardNumber) {
+        return cardUtility.validateCardNumber(cardNumber);
+    }
 }

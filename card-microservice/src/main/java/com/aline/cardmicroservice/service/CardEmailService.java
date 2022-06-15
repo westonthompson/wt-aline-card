@@ -44,7 +44,8 @@ public class CardEmailService {
                 {"securityCode", securityCode},
                 {"expirationDate", expirationDate.format(formatter)},
                 {"cardHolderName", cardHolderName},
-                {"activateCardUrl", memberDashboard}
+                {"activateCardUrl", memberDashboard},
+                {"issuerName", card.getCardIssuer().getIssuerName()}
         }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
 
         String templateName = replacement ? "card/replace-card" : "card/send-card";
